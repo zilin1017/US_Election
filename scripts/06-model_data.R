@@ -2,7 +2,7 @@
 # Purpose: Models Donald Trump's support rate in the 2024 U.S. Presidential Election 
 #          using Bayesian time-series analysis.
 # Author: Irene Liu
-# Date: 21 October 2024
+# Date: Zilin Liu
 # Contact: liuzilin.liu@mail.utoronto.ca
 # License: MIT
 # Pre-requisites: Install necessary libraries.

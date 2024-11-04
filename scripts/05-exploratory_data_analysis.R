@@ -1,7 +1,7 @@
 #### Preamble ####
 # Purpose: Models Trump's vote rate exceeds 50% and the relationship between the States 
 #   And the relationship between transparency and pct.
-# Author: Irene Liu
+# Author: Zilin Liu
 # Date: 21 October 2024
 # Contact: liuzilin.liu@mail.utoronto.ca
 # License: MIT

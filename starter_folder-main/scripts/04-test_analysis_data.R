@@ -1,69 +1,54 @@
 #### Preamble ####
-# Purpose: Tests... [...UPDATE THIS...]
-# Author: Rohan Alexander [...UPDATE THIS...]
-# Date: 26 September 2024 [...UPDATE THIS...]
-# Contact: rohan.alexander@utoronto.ca [...UPDATE THIS...]
+# Purpose: Tests the structure and validity of the America 2024 presidential polls dataset
+# Author: Irene Liu
+# Date: 21 October 2024
+# Contact: liuzilin.liu@mail.utoronto.ca
 # License: MIT
-# Pre-requisites: [...UPDATE THIS...]
-# Any other information needed? [...UPDATE THIS...]
+# Pre-requisites:
+# - Install needed package `tidyverse` , `dplyr` and `readr`.
+# - 03-clean_data.R must have been run
+# Any other information needed? Make sure you are in the `US_Election` rproj
+
 
 
 #### Workspace setup ####
 library(tidyverse)
-library(testthat)
+library(dplyr)
+library(readr)
 
-data <- read_csv("data/02-analysis_data/analysis_data.csv")
+#load data
+poll_data <- read_csv("data/02-analysis_data/analysis_data.csv")
 
+# 1. Count the number of NA in each column
+missing_values_count <- colSums(is.na(poll_data))
+print(missing_values_count)
 
-#### Test data ####
-# Test that the dataset has 151 rows - there are 151 divisions in Australia
-test_that("dataset has 151 rows", {
-  expect_equal(nrow(analysis_data), 151)
-})
+# 2. Use IQR method to detect abnormal values in' pct' column.
+first_quartile <- quantile(poll_data$pct, 0.25, na.rm = TRUE)
+third_quartile <- quantile(poll_data$pct, 0.75, na.rm = TRUE)
+interquartile_range <- third_quartile - first_quartile
+outliers_detected <- any(poll_data$pct < (first_quartile - 1.5 * interquartile_range) | 
+                           poll_data$pct > (third_quartile + 1.5 * interquartile_range))
 
-# Test that the dataset has 3 columns
-test_that("dataset has 3 columns", {
-  expect_equal(ncol(analysis_data), 3)
-})
+if (outliers_detected) {
+  print("There are outliers that support percentages.")
+} else {
+  print("No outliers of support percentage was found.")
+}
 
-# Test that the 'division' column is character type
-test_that("'division' is character", {
-  expect_type(analysis_data$division, "character")
-})
+# 3. Verify that all values in the'log simple size' column are greater than 0.
+valid_log_sample_size <- all(poll_data$log_sample_size >0, na.rm = TRUE)
+if (valid_log_sample_size) {
+  print("All log_sample_size greater than  0.")
+} else {
+  print("There is an invalid log_sample_size (less than 0).")
+}
 
-# Test that the 'party' column is character type
-test_that("'party' is character", {
-  expect_type(analysis_data$party, "character")
-})
+# 3. Verify that all values in the' transparency_score' column are greater than 0.
+numeric_transparency_score <- all(sapply(poll_data$transparency_score, is.numeric), na.rm = TRUE)
+if (numeric_transparency_score) {
+  print("All transparency_score are numerical.")
+} else {
+  print("Not all transparency_score are numeric.")
+}
 
-# Test that the 'state' column is character type
-test_that("'state' is character", {
-  expect_type(analysis_data$state, "character")
-})
-
-# Test that there are no missing values in the dataset
-test_that("no missing values in dataset", {
-  expect_true(all(!is.na(analysis_data)))
-})
-
-# Test that 'division' contains unique values (no duplicates)
-test_that("'division' column contains unique values", {
-  expect_equal(length(unique(analysis_data$division)), 151)
-})
-
-# Test that 'state' contains only valid Australian state or territory names
-valid_states <- c("New South Wales", "Victoria", "Queensland", "South Australia", "Western Australia", 
-                  "Tasmania", "Northern Territory", "Australian Capital Territory")
-test_that("'state' contains valid Australian state names", {
-  expect_true(all(analysis_data$state %in% valid_states))
-})
-
-# Test that there are no empty strings in 'division', 'party', or 'state' columns
-test_that("no empty strings in 'division', 'party', or 'state' columns", {
-  expect_false(any(analysis_data$division == "" | analysis_data$party == "" | analysis_data$state == ""))
-})
-
-# Test that the 'party' column contains at least 2 unique values
-test_that("'party' column contains at least 2 unique values", {
-  expect_true(length(unique(analysis_data$party)) >= 2)
-})

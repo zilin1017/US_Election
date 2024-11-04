@@ -1,9 +1,9 @@
 #### Preamble ####
-# Purpose: Tests the structure and validity of the simulated Australian 
+# Purpose: Tests the structure and validity of the simulated 2024 American 
   #electoral divisions dataset.
-# Author: Rohan Alexander
-# Date: 26 September 2024
-# Contact: rohan.alexander@utoronto.ca
+# Author: Irene Liu
+# Date: 21 October 2024
+# Contact: liuzilin.liu@mail.utoronto.ca
 # License: MIT
 # Pre-requisites: 
   # - The `tidyverse` package must be installed and loaded
@@ -12,78 +12,62 @@
 
 
 #### Workspace setup ####
-library(tidyverse)
 
-analysis_data <- read_csv("data/00-simulated_data/simulated_data.csv")
+# Load the necessary libraries
+library(dplyr)
+library(readr)
+library(ggplot2)
 
-# Test if the data was successfully loaded
-if (exists("analysis_data")) {
-  message("Test Passed: The dataset was successfully loaded.")
-} else {
-  stop("Test Failed: The dataset could not be loaded.")
+# load data
+data <- read.csv(here::here("data/00-simulated_data/simulated_data.csv"))
+
+# Define a function to perform data quality check.
+check_data_quality <- function(data, column) {
+  # Check NA value
+  na_count <- sum(is.na(data[[column]]))
+  cat(sprintf("Column '%s' has %d NA values.\n", column, na_count))
+  
+  # Check for outliers (for numeric columns only)
+  if (is.numeric(data[[column]]) && !is.logical(data[[column]])) {
+    Q1 <- quantile(data[[column]], 0.25, na.rm = TRUE)
+    Q3 <- quantile(data[[column]], 0.75, na.rm = TRUE)
+    IQR_value <- Q3 - Q1
+    lower_bound <- Q1 - 1.5 * IQR_value
+    upper_bound <- Q3 + 1.5 * IQR_value
+    outliers <- data[[column]] < lower_bound | data[[column]] > upper_bound
+    outlier_count <- sum(outliers, na.rm = TRUE)
+    cat(sprintf("Column '%s' has %d outliers.\n", column, outlier_count))
+    
+    # Draw a box plot
+    p <- ggplot(data, aes(x = 1, y = column)) +
+      geom_boxplot() +
+      theme_minimal() +
+      labs(title = paste0("Boxplot for ", column), x = "", y = column)
+    print(p)
+  }
+  
+  # Check the range of values (only for columns such as sample size)
+  if (column == "sample_size") {
+    negative_values <- any(data[[column]] <= 0, na.rm = TRUE)
+    if (negative_values) {
+      cat("Warning: There are non-positive values in 'sample_size'.\n")
+    } else {
+      cat("All 'sample_size' values are positive.\n")
+    }
+  }
+  
+  # Check data type consistency
+  is_numeric <- all(sapply(data[[column]], is.numeric), na.rm = TRUE)
+  if (!is_numeric) {
+    cat("Warning: Not all values in '", column, "' are numeric.\n", sep="")
+  } else {
+    cat("All values in '", column, "' are numeric.\n", sep="")
+  }
 }
 
-
-#### Test data ####
-
-# Check if the dataset has 151 rows
-if (nrow(analysis_data) == 151) {
-  message("Test Passed: The dataset has 151 rows.")
-} else {
-  stop("Test Failed: The dataset does not have 151 rows.")
+# Check data quality for specific columns
+columns_to_check <- c("pct", "sample_size")
+for (col in columns_to_check) {
+  check_data_quality(data, col)
 }
 
-# Check if the dataset has 3 columns
-if (ncol(analysis_data) == 3) {
-  message("Test Passed: The dataset has 3 columns.")
-} else {
-  stop("Test Failed: The dataset does not have 3 columns.")
-}
-
-# Check if all values in the 'division' column are unique
-if (n_distinct(analysis_data$division) == nrow(analysis_data)) {
-  message("Test Passed: All values in 'division' are unique.")
-} else {
-  stop("Test Failed: The 'division' column contains duplicate values.")
-}
-
-# Check if the 'state' column contains only valid Australian state names
-valid_states <- c("New South Wales", "Victoria", "Queensland", "South Australia", 
-                  "Western Australia", "Tasmania", "Northern Territory", 
-                  "Australian Capital Territory")
-
-if (all(analysis_data$state %in% valid_states)) {
-  message("Test Passed: The 'state' column contains only valid Australian state names.")
-} else {
-  stop("Test Failed: The 'state' column contains invalid state names.")
-}
-
-# Check if the 'party' column contains only valid party names
-valid_parties <- c("Labor", "Liberal", "Greens", "National", "Other")
-
-if (all(analysis_data$party %in% valid_parties)) {
-  message("Test Passed: The 'party' column contains only valid party names.")
-} else {
-  stop("Test Failed: The 'party' column contains invalid party names.")
-}
-
-# Check if there are any missing values in the dataset
-if (all(!is.na(analysis_data))) {
-  message("Test Passed: The dataset contains no missing values.")
-} else {
-  stop("Test Failed: The dataset contains missing values.")
-}
-
-# Check if there are no empty strings in 'division', 'state', and 'party' columns
-if (all(analysis_data$division != "" & analysis_data$state != "" & analysis_data$party != "")) {
-  message("Test Passed: There are no empty strings in 'division', 'state', or 'party'.")
-} else {
-  stop("Test Failed: There are empty strings in one or more columns.")
-}
-
-# Check if the 'party' column has at least two unique values
-if (n_distinct(analysis_data$party) >= 2) {
-  message("Test Passed: The 'party' column contains at least two unique values.")
-} else {
-  stop("Test Failed: The 'party' column contains less than two unique values.")
-}

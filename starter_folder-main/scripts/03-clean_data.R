@@ -1,44 +1,40 @@
 #### Preamble ####
-# Purpose: Cleans the raw plane data recorded by two observers..... [...UPDATE THIS...]
-# Author: Rohan Alexander [...UPDATE THIS...]
-# Date: 6 April 2023 [...UPDATE THIS...]
-# Contact: rohan.alexander@utoronto.ca [...UPDATE THIS...]
+# Purpose: Cleans the raw polling data for the 2024 US presidential election.
+# Author: Irene Liu
+# Date: 21 October 2024
+# Contact: liuzilin.liu@mail.utoronto.ca
 # License: MIT
-# Pre-requisites: [...UPDATE THIS...]
-# Any other information needed? [...UPDATE THIS...]
+# Pre-requisites: Install necessary libraries.
+# Any other information needed? Make sure 02-download_data.R must have been run
 
 #### Workspace setup ####
 library(tidyverse)
+library(ggplot2)
+library(modelsummary)
+library(rstanarm)
+library(collapse)
+library(arrow)
 
 #### Clean data ####
-raw_data <- read_csv("inputs/data/plane_data.csv")
 
-cleaned_data <-
-  raw_data |>
-  janitor::clean_names() |>
-  select(wing_width_mm, wing_length_mm, flying_time_sec_first_timer) |>
-  filter(wing_width_mm != "caw") |>
-  mutate(
-    flying_time_sec_first_timer = if_else(flying_time_sec_first_timer == "1,35",
-                                   "1.35",
-                                   flying_time_sec_first_timer)
-  ) |>
-  mutate(wing_width_mm = if_else(wing_width_mm == "490",
-                                 "49",
-                                 wing_width_mm)) |>
-  mutate(wing_width_mm = if_else(wing_width_mm == "6",
-                                 "60",
-                                 wing_width_mm)) |>
-  mutate(
-    wing_width_mm = as.numeric(wing_width_mm),
-    wing_length_mm = as.numeric(wing_length_mm),
-    flying_time_sec_first_timer = as.numeric(flying_time_sec_first_timer)
-  ) |>
-  rename(flying_time = flying_time_sec_first_timer,
-         width = wing_width_mm,
-         length = wing_length_mm
-         ) |> 
-  tidyr::drop_na()
+## load data
+poll<-read.csv(file = "data/01-raw_data/raw_data.csv")
 
-#### Save data ####
-write_csv(cleaned_data, "outputs/data/analysis_data.csv")
+## Data cleaning and processing
+poll1<-select(poll ,candidate_name, pct ,state,numeric_grade,start_date,transparency_score,sample_size)%>%
+  mutate(vote=ifelse(pct>=50,"yes","no"))%>%
+  mutate(start_date = as.Date(start_date, format = "%m/%d/%y"))%>%
+  mutate(log_sample_size=log(sample_size))%>%
+  filter(candidate_name=="Donald Trump" )%>%
+  filter(numeric_grade>=2.5 &  start_date >= as.Date("2024-07-01"))
+
+# Format of state and remove the missing value
+poll2 <- poll1 %>%
+  mutate(state = str_replace(state, " CD-\\d+", ""))%>%
+  filter(state!="" & log_sample_size!="")%>%
+  filter(state %in% c("Georgia","Michigan","Pennsylvania","Arizona","North Carolina","Wisconsin","Texas","Florida"))
+
+
+## Save data
+write.csv(poll2,"data/02-analysis_data/analysis_data.csv")
+

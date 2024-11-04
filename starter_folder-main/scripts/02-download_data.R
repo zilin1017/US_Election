@@ -1,26 +1,30 @@
 #### Preamble ####
-# Purpose: Downloads and saves the data from [...UPDATE THIS...]
-# Author: Rohan Alexander [...UPDATE THIS...]
-# Date: 11 February 2023 [...UPDATE THIS...]
-# Contact: rohan.alexander@utoronto.ca [...UPDATE THIS...]
+# Purpose: Downloads and saves the data from fivethirtyeight (https://projects.fivethirtyeight.com/polls/president-general/2024/national/)
+# Author: Irene Liu
+# Date: 21 October 2024
+# Contact: liuzilin.liu@mail.utoronto.ca
 # License: MIT
-# Pre-requisites: [...UPDATE THIS...]
-# Any other information needed? [...UPDATE THIS...]
+# Pre-requisites: 
+#   -Download the raw polling data from https://projects.fivethirtyeight.com/polls/president-general/2024/national/
+#   -Install necessary libraries, such as readr and tidyverse.
+# Any other information needed? None
 
 
 #### Workspace setup ####
-library(opendatatoronto)
+#install.packages("readr")
+#install.packages("tidyverse")
 library(tidyverse)
-# [...UPDATE THIS...]
+library(readr)
+
 
 #### Download data ####
-# [...ADD CODE HERE TO DOWNLOAD...]
+
+poll<-read_csv(here::here("data/01-raw_data/president_polls.csv"))
 
 
 
 #### Save data ####
-# [...UPDATE THIS...]
-# change the_raw_data to whatever name you assigned when you downloaded it.
-write_csv(the_raw_data, "inputs/data/raw_data.csv") 
+
+write_csv(poll, "data/01-raw_data/raw_data.csv") 
 
          

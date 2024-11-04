@@ -1,0 +1,377 @@
+---
+title: "Prediction and analysis of 2024 US presidential election"
+subtitle: "Forecasting Election Outcomes: A Logistic Regression Approach to Voter Support"
+author: 
+  - Zilin Liu
+thanks: "Code and data are available at: [https://github.com/RohanAlexander/starter_folder](https://github.com/RohanAlexander/starter_folder)."
+date: today
+date-format: long
+abstract: "This paper uses the data of the 2024 American election to make a prediction, and establishes a logistic regression model to discuss the election probability of Donald Trump. In this paper, states, sample size, start date and transparency are used as predictive variables to predict whether Donald Trump will be elected president in the future. This paper also expounds the advantages and limitations of statistical modeling in election data, and fills the gap of the influence of different characteristics on election voting."
+format: pdf
+toc: true
+number-sections: true
+bibliography: references.bib
+---
+
+```{r}
+#| include: false
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(ggplot2)
+library(modelsummary)
+library(rstanarm)
+library(marginaleffects)
+library(collapse)
+library(here)
+```
+
+# Introduction
+
+The American election, as one of the most remarkable political events in the world, not only determines the future direction of the United States, but also has a far-reaching impact on international relations and global policies. In this election, Donald Trump and Kamala Harris are the two main candidates, and their political ideas, policy propositions and personal charm will all become important factors affecting voters' decision-making. Through in-depth analysis of the 2024 presidential election in the United States, this paper aims to provide readers with a clear election picture. This paper tries to fill this gap in the academic field by collecting and analyzing the latest poll data and analyzing the characteristics of the States, samples size, start date and transparency score. Through this study, I hope readers can judge from the characteristics of states and so on. This estimate is the difference in the voting rate of Donald Trump in eight different States and other predictors.The estimated values in our logistics regression analysis are the regression coefficient of each predictor-voting state, the regression coefficient of logarithmic sample size, the regression coefficient of survey start date and the regression coefficient of transparency score. These coefficients represent the estimated influence of each predictor on the voted of successful election, while other predictors keep fixed.
+
+
+The remainder of this paper is structured as follows. @sec-data introduces the data sources, preprocessing procedures, variable selection standards, and possible correlations between independent and dependent variables. @sec-model succinctly the hierarchical Bayesian model explain. @sec-results along with an overview of the model's output to bolster its accuracy and forecast Trump's support rate in various geographic areas on November 5, 2024 and shows the result of state's support rate. @sec-prediction use the established logistics regression model to predict Trump's support rate. @sec-discussion talks about mitations of the data and polls, the difficulty of converting our real world into data, and future directions.
+
+# Data {#sec-data}
+
+## Overview
+
+The data used in this paper comes from the survey data of FiveThirtyEight (@fivethirtyeight) Presidential general election polls (2024). Statistical programming language R is used to retrieve [@citeR], clean and process data. In particular, the following R packages are used in this report analysis: `tidyverse` [@tidyverse] is used for data cleaning and processing, `ggplot2` [@ggplot2] is used for data visualization, `modelsummary` [@modelsummary] is used for predicting the output of model data, and `rstanarm` [@rstanarm] is used for constructing Bayesian prediction model. Other libraries that supported the data analysis include `knitr` [@knitr], `tibble`[@tibble], `readr`[@readr],  `collapse` [@rcollapse], `arrow`[@arrow], `dplyr`[@dplyr] and `marginaleffects`[@R-marginaleffects]. Additionally, Professor Rohan Alexander of the University of Toronto [@rohan] provided the folder structure for this analysis.
+
+## Measurement
+
+The data set of this analysis is the data about polls from FiveThirtyEight website (@fivethirtyeight), which is a source with reliable data quality and good reputation.
+
+This data focus on the importance of different variables used to measure public opinions and voting quality, especially in the context of political polls. Pct (Support Rate): This is the main variable in the data set, representing the support rate of each candidate. It is used as an indicator of public opinion in every poll. The assumption here is that the sample population can accurately reflect the wider voting population, and the higher the percentage, the more popular the candidate is. Generally, more than 50% of the candidates are supported. Sample size: The data set includes the variable sample size, which is very important for the representation of the polls. Generally speaking, the larger the sample size, the more reliable the percentage support rate is, thus reducing the error range. Transparency_score: This variable measures the transparency of each poll when its methodology is made public. The higher the score, the greater the reliability, which means the less the possibility of bias when the poll is introduced into the analysis.
+
+Although data sets provide a comprehensive view of public opinion trends, there are some potential limitations that may affect the validity and reliability of variables. These limitations include: Differences in survey methods: Different survey methods may have different effects on the results. Regional deviation in the sample: If the sample is not evenly distributed geographically, it may lead to regional deviation and affect the representation of the results. Variability of public opinions: public opinions change with time, which may affect the stability and forecasting ability of data. Small measurement errors are acceptable and have little impact on this analysis.
+
+## Analysis Data
+
+This analysis data set is mainly an analysis of Donald Trump's vote rate in the 2024 US presidential election. The primary research goal of this project analysis is to predict whether Trump is likely to win in the 2024 general election, so the vote rate is our main indicator for modeling and forecasting. The vote rate represents whether the proportion of respondents who support Trump in a specific poll exceeds 50%. This analysis data set uses only polls with a numeric_grade higher than 2.5 and data with a starting date greater than July 1, 2024, which ensures the reliability and timeliness of the analysis data. We will explore how the vote rate is affected by different factors, such as state, time or transparency, and sample size. By simulating the fluctuation of Trump's support rate, we can infer his election performance, analyze the trend within his support base and analyze the influence of various factors on his popularity.
+
+## Outcome variables
+
+There are many variables in the original data. This case, some variables will be selected for prediction analysis. The outcome variable of this analysis is vote, and only the date of candidate Donald Trump is kept. Binary logistics regression analysis is used to predict the support rate of Donald Trump. A new variable vote is derived from this report. When pct is greater than or equal to 50%, it is defined as yes (is_vote=1), otherwise it is NO (is_vote=0). In this study, it is considered that Trump will win the election if the vote rate is greater than 50%.
+
+
+## Predictor variables
+
+This paper also selected the following variables as predictor variables for analysis. 
+
+**State**: for the variable state, eight states with more data are selected, namely "Georgia","Michigan","Pennsylvania","Arizona","North Carolina","Wisconsin","Texas" and "Florida".As we all know, some swing States have not yet determined the support rate of candidates, but most States have almost locked in candidates.
+
+**sample size**: The larger the sample size, the more reliable the data is. In order to solve the variance problem and meet the assumptions of the regression model, the sample size is logarithmic transformed in the analysis.
+
+**Starting time**, this data analysis believes that Trump's support rate will change with the growth of the survey time, and the survey date will start from July 1, 2024.
+
+**Transparency grade**: Research shows that the transparency of polling methods is very important for the credibility and reliability of polling results. The higher the score, the greater the reliability, which means the less the possibility of bias when the poll is introduced into the analysis.
+
+```{r}
+#| label: tbl-1
+#| echo: false
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(ggplot2)
+library(modelsummary)
+library(rstanarm)
+library(marginaleffects)
+library(collapse)
+library(knitr)
+library(kableExtra)
+library(cowplot)
+#### Read data ####
+trump <- read.csv(here::here("data/02-analysis_data/analysis_data.csv"))
+
+
+## Analytic data set
+
+## show the data
+trump[1:10,] %>%select("pct","state","start_date","transparency_score","vote" ,"log_sample_size")%>%
+  kable(
+    col.names = c("pct","state","start_date","transparency_score","vote" ,"log_sample_size"),
+    digits = 1,
+    format.args = list(big.mark = ","),
+    booktabs = TRUE,
+    caption = "Top 10 Records of Trump's Poll Data",
+  )
+```
+
+## Visual analysis
+
+The following figures, @fig-pollsternnumber, @fig-state-time, display various aspects of data related to Trump's support rate.
+
+@fig-pollsternnumber shows the data of American elections in eight States in 2024. It can be seen that Texas and Florida support Trump more, while Pennsylvania and Wisconsin support Trump less.
+
+@fig-state-time shows the changes in the support rate of Trump's election in eight American states from July to November, 2024. From the four figures, we can see that in Texas and Florida, the support rate of most surveys is above 50%, while in other States, the support rate has obviously increased with time, all of which have increased to about 50%. Through the support rate trend chart of Trump's eight States, it is found that Trump's support rate is rising near the US election.
+
+```{r}
+#| label: fig-pollsternnumber
+#| fig-cap: Support Rates for Donald Trump of Eight-state
+#| echo: false
+#| warning: false
+#| message: false
+
+trump%>%
+  ggplot(aes(x = state, fill =candidate_name)) +
+  stat_count(position = "dodge") +
+  facet_wrap(facets = vars(vote)) +
+  theme_minimal() +
+  labs(
+       x = "State",
+       y = "Number of respondents",
+       fill = "Voted for") +
+  coord_flip() +
+  scale_fill_brewer(palette = "Set1") +
+  theme(legend.position = "bottom")
+
+```
+
+```{r}
+#| label: fig-state-time
+#| fig-cap: Support Percentage Over Time by State
+#| echo: false
+#| warning: false
+#| message: false
+
+# Plot the regression line for log(Sample Size) vs pct
+
+trump$start_date <- as.Date(trump$start_date)
+p1<-trump%>%filter(state=="Arizona"| state=="Florida")%>%ggplot( aes(x = start_date, y = pct,colour = state )) +
+  geom_line(size = 1) +
+  geom_point(size = 2) +
+  labs(
+       x = "Date", y = "Support Percentage (%)") +
+  scale_x_date(limits = c(as.Date("2024-07-01"), as.Date("2024-11-05"))) +
+  theme_minimal() + 
+  theme(plot.title = element_text(hjust = 0.5))  # Center the title
+
+
+p2<-trump%>%filter(state=="Georgia"| state=="Michigan")%>%ggplot( aes(x = start_date, y = pct,colour = state )) +
+  geom_line(size = 1) +
+  geom_point(size = 2) +
+  labs(
+       x = "Date", y = "Support Percentage (%)") +
+  scale_x_date(limits = c(as.Date("2024-07-01"), as.Date("2024-11-05"))) +
+  theme_minimal() + 
+  theme(plot.title = element_text(hjust = 0.5))  # Center the title
+
+
+p3<-trump%>%filter(state=="Texas"| state=="North Carolina")%>%ggplot( aes(x = start_date, y = pct,colour = state )) +
+  geom_line(size = 1) +
+  geom_point(size = 2) +
+  labs(
+       x = "Date", y = "Support Percentage (%)") +
+  scale_x_date(limits = c(as.Date("2024-07-01"), as.Date("2024-11-05"))) +
+  theme_minimal() + 
+  theme(plot.title = element_text(hjust = 0.5))  # Center the title
+
+p4<-trump%>%filter(state=="Pennsylvania"| state=="Wisconsin")%>%
+  ggplot( aes(x = start_date, y = pct,colour = state )) +
+  geom_line(size = 1) +
+  geom_point(size = 2) +
+  labs(
+       x = "Date", y = "Support Percentage (%)") +
+  scale_x_date(limits = c(as.Date("2024-07-01"), as.Date("2024-11-05"))) +
+  theme_minimal() + 
+  theme(plot.title = element_text(hjust = 0.5))  # Center the title
+
+plot_grid(p1,p2,p3,p4,ncol = 2)
+
+```
+
+
+\newpage
+
+# Model {#sec-model}
+
+My modeling goal is to establish a logistic regression model by using logistic distribution, because the dependent variable is a binary variable, which is used to predict the successful election rate of Trump.
+
+## Model set-up
+
+Define yi as the whether to support Trump as president (pct \>=50) and the explanatory variable as the state, sample size, start date and transparency.
+
+$$ y_i | \pi_i \sim \text{Bern}(\pi_i)$$ Formula:
+
+$$\text{logit}(y_i) = \beta_0 + \beta_1 \times \text{state}+ \beta_2 \times \text{start date}+\beta_3\times\text{log sample size}+\beta_4\times\text{transparency score}$$
+
+where:
+
+-   $y_i$ is a binary variable, whether the election is successful or not.
+-   $\beta_0 \sim \text{Normal}(0, 2.5)$ is the global intercept for Trump support.
+-   $\beta_1 \sim \text{Normal}(0, 2.5)$ represents the effect of state on Trump support.
+-   $\beta_2 \sim \text{Normal}(0, 2.5)$ represents the effect of start date.
+-   $\beta_3 \sim \text{Normal}(0, 2.5)$ represents the effect of sample size.
+-   $\beta_4 \sim \text{Normal}(0, 2.5)$ represents the effect of transparency score.
+
+We run the model in R [@citeR] using the `rstanarm` package of [@rstanarm]. We use the default priors from `rstanarm` [@rstanarm].
+
+### Model justification
+
+According to the state data and the voting rates of Harris and Trump, this analysis shows that Michigan and Pennsylvania support Harris more, while Georgia and Arizona have lower voting rates for Harris.
+
+# Results {#sec-results}
+
+```{r}
+#| echo: false
+#| eval: true
+#| warning: false
+#| message: false
+#| include: false
+
+logit_data<-trump%>%
+  mutate(is_vote=factor(ifelse(vote=="yes",1,0)))%>%
+  mutate(start_date=as.numeric(start_date))
+  
+
+### Model data ####
+## Bayesian logistic model 
+poll_model <-stan_glm(
+  is_vote ~state+ start_date+log_sample_size+transparency_score,data = logit_data,
+  family = binomial(link = "logit"),
+  prior = normal(location = 0, scale = 2.5, autoscale = TRUE),
+  prior_intercept = 
+    normal(location = 0, scale = 2.5, autoscale = TRUE))
+```
+
+```{r}
+#| label: tbl-2
+#| echo: false
+#| warning: false
+
+modelsummary(list("Donald Trump" = poll_model),statistic = "mad",title = "Logistic regression analysis Voted for Donald Trump")
+
+```
+
+Logistics regression results @tbl-2 show that Florida and Texas are Trump's staunch support states, while the support of the other six states is relatively low. The influence of the start time of the survey on Trump's support rate is positive. As the time of the US election approaches, Trump's support rate gradually increases. The influence of sample size on Trump's support rate is positive. With the increase of sample size, Trump's support rate gradually increases. The transparency score of the survey has no significant impact on Trump's support rate. The goodness of fit of this logistics regression model is 36.6% in R square and 0.34 in RMSE, which shows that the model has the possibility of further improvement.
+
+# Prediction {#sec-prediction}
+
+Predicting Trump's support rate, use the established logistics regression model to predict, create predictive variables, select eight states as the predictive variables of states, select November May, 2024 as the starting date, use the average sample size of the analysis data set as simple size, and select the average transparency score of the analysis data set as transparency score. Through the prediction analysis (Table 3), it is concluded that the support rate of three States is more than 50%, namely Arizona, Florida and Texas. The support rate of other States is less than 0.5. This project can use the same logistic model to predict all States in the United States and get the final prediction probability.
+
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+
+##Create prediction data
+pre_date=c("2024-11-05")
+prediction_data <- data.frame(
+  state = unique(logit_data$state),
+  start_date =as.numeric(as.Date(pre_date)),
+  log_sample_size = mean(logit_data$log_sample_size),
+  transparency_score = mean(logit_data$transparency_score)
+)
+
+# # Use models to make predictions
+predicted_support <- predictions(poll_model, newdata = prediction_data)
+ 
+# Calculate the average forecast support rate of each state.
+pred_result <- mean(predicted_support$estimate)
+
+kable(predicted_support[,2:5],
+    col.names = c("Estimate","2.5% CI","97.5% CI","State"),
+    digits =3 ,
+    format.args = list(big.mark = ","),
+    booktabs = TRUE,
+    caption = "Prediction for Trump's support rate",
+  )
+```
+
+# Discussion {#sec-discussion}
+
+## Variations in State-Level Support Rates {#sec-first-point}
+
+In this study, we analyzed Donald Trump’s election situation in the 2024 U.S. presidential election, and the results show significant differences in support rates across various states. Specifically, in Florida and Texas, Trump’s support rate is noticeably higher than in other states. These differences may be influenced by a variety of factors, including local economic conditions, social issues, and the intensity of campaign activities by the candidates. By discussing these factors, we gain a better understanding of how state-level support rate differences are formed. This finding highlights the importance of regional variation in elections and suggests that state-level data are essential for improving the accuracy of election prediction models.
+
+## Impact of Poll Sample Size and Timing on Support Rates
+
+The study also found that the timing and sample size of polls have a significant impact on Trump’s support rate. The analysis indicates that the later a poll begins, the higher Trump’s support rate, possibly because voter positions become more definite as the election approaches. Additionally, larger sample sizes correlate with higher support rates for Trump, which might be because polls with larger samples can more accurately reflect public opinion. This finding emphasizes the need to consider the effects of sample size and timing when using polling data to ensure the accuracy of predictions. By controlling for these variables, we can enhance the robustness and predictive power of the model.
+
+## Model Limitations and Directions for Future Improvement
+
+While the linear regression model in this study provides valuable insights into predicting Trump’s support rate, it still has limitations. For example, the model does not fully cover data from all states, which may affect the comprehensiveness of the predictions. Additionally, the model lacks some potential explanatory variables, which could impact the thoroughness of voter behavior analysis. Future research could improve the model’s predictive accuracy by incorporating more representative explanatory variables, such as voter age and income levels. Further model improvements could also involve incorporating nonlinear or machine learning algorithms to better capture complex voter preference changes, providing a stronger foundation for future political analysis and prediction.
+
+
+\newpage
+
+\appendix
+
+# Appendix: TIPP's methodology
+
+## Trend In Politics and Policy
+
+TIPP (TechnoMetrica Institute of Policy and Politics) specializes in investigating and analyzing political, social, and economic trends in the United States. Known for its in-depth polling on public sentiment, TIPP frequently utilizes online panels and mixed-mode survey methods, including phone and internet-based surveys, to gather data that reflects the current opinions of the American populace [@blumenthal2010]. By focusing on public opinions, policy shifts, and election dynamics, TIPP aims to provide comprehensive insights that capture the pulse of the nation. Transparency is a central tenet of TIPP’s methodology; the organization emphasizes clear reporting on sample selection, survey design, and result interpretation, which enhances the reliability and validity of its findings [@pew2022].
+
+TIPP typically targets the U.S. adult population or registered voters, recruiting participants through online advertisements, email invitations, and social media platforms. This approach broadens its reach, enabling it to access a diverse pool of respondents. To ensure representation, TIPP often employs probabilistic sampling methods, such as random sampling, which provides each respondent with an equal chance of being selected. This probabilistic approach mitigates selection bias, making TIPP’s findings more generalizable to the broader population.
+
+The use of online surveys also allows TIPP to distribute and collect questionnaires swiftly, providing researchers with large datasets in a short time frame. This flexibility is particularly valuable in rapidly changing political and social climates, where timely data can reveal shifts in public opinion or emerging trends. Moreover, online surveys are cost-effective and scalable, allowing TIPP to conduct frequent polls without incurring the high costs associated with traditional survey methods (Couper, 2000). This adaptability makes TIPP’s data collection approach well-suited for analyzing evolving political and social landscapes, offering policymakers and analysts timely insights into public opinion.
+
+## Population, Frame, and Sample of the Poll
+
+Target population: 
+  -Registered voters in the United States.
+
+Sampling method: Stratified random sampling. 
+  -Divide the population into different layers (for example, according to geographical area, age, gender, race and political orientation), and then randomly select samples from each layer.
+
+Sample size: 
+  -According to the budget and the required error range, determine the appropriate sample size. Generally speaking, the larger the sample, the higher the reliability of the results.
+
+Recruitment method: Email invitation.
+  -Use the voter registration database to send email invitations to potential interviewees. Social media advertising: Put targeted advertisements on Facebook, Twitter and other platforms to attract respondents to participate in the survey.
+
+Online market research platform: Cooperate with online market research platforms such as Google Forms to recruit respondents.
+
+Incentive measures: Provide small cash rewards or gift cards to improve the response rate. 
+
+Survey tools: Use online survey software (such as Google Forms and Qualtrics) to collect data.
+
+## Advantages and Trade-offs in TIPP's Online Sampling Approach
+
+TIPP’s use of online and digital recruitment channels has significant advantages. Primarily, this approach allows for cost-effective and rapid data collection, enabling TIPP to produce timely insights on public opinion as social and political landscapes shift. By leveraging online panels and digital recruitment, TIPP reduces coverage bias, as individuals with access to the internet, regardless of their geographical location, can participate. This inclusive approach captures the perspectives of tech-savvy individuals and mobile-first users who may otherwise be overlooked by traditional survey methods.
+
+However, there are trade-offs associated with this method. The reliance on online recruitment can introduce selection bias, as those who participate are generally more comfortable with technology and may not be representative of the entire electorate. Additionally, online panel participants may exhibit "professional respondent" behavior, where frequent survey-takers may skew results due to their familiarity with survey formats. Such biases can impact the representativeness of the results and require careful adjustment through weighting techniques.
+
+## Questionnaire Design
+TIPP’s questionnaire design emphasizes clarity and brevity. Questions are crafted to be straightforward and free from technical jargon, enhancing respondent understanding and reducing the likelihood of response errors. This design strategy is particularly effective in retaining respondents' engagement throughout the survey. Moreover, TIPP's focus on current, high-interest topics, such as political preferences and key social issues, ensures that the survey content remains relevant to respondents' lives.
+
+However, one limitation of TIPP’s questionnaire design is its relatively narrow focus, as it often captures only the surface-level opinions of respondents without delving into the underlying motivations for their views. Additionally, since TIPP employs multiple survey channels, respondent engagement levels may vary across modes. For instance, respondents recruited through social media may interact differently with the survey compared to those from online panels, potentially influencing the depth and accuracy of their responses.
+
+## Conclusion
+
+TIPP’s online sampling and recruitment approach enables the organization to balance cost-effectiveness with comprehensive demographic reach. By combining online panels, social media outreach, and robust weighting systems, TIPP enhances the representativeness and reliability of its data. While this methodology effectively reduces coverage bias, potential challenges—such as selection bias from frequent online survey participants and limited engagement depth due to mode-specific interactions—must be taken into account during analysis. These considerations help ensure that TIPP’s survey findings remain relevant and accurate in capturing the dynamics of public opinion.
+
+# Methodology and Survey Design
+
+To investigate voter support patterns in the 2024 U.S. presidential election, we designed a methodology that integrates both probabilistic sampling and precise demographic stratification. This approach allows us to capture reliable insights across diverse voter segments and geographic distributions. Utilizing stratified random sampling, our survey divides the sample into key demographic segments—such as age, education, and regional representation—enhancing accuracy and reducing sampling bias, as recommended by election research literatured on both registered voters and those categorized as likely voters, providing a balance between broad societal attitudes and a focus on election outcomes. The survey was structured using digital platforms like Google Forms, ensuring accessibility and ease of use for respondents. The choice of an online platform supports efficient data collection and offers scalability within the constraints of our $100,000 budget.
+
+The survey was carefully designed to mitigate non-response bias, with respondent recruitment achieved through targeted social media ads and email outreach. Small monetary incentives were provided to participants to encourage a higher response rate and mitigate potential attrition issues, reflecting best practices for survey engagement in electoral studies .
+
+Data quaorously maintained through a multi-stage validation process. Responses were cross-verified with public voter files, and the dataset was cleansed to exclude incomplete entries. Following data collection, we applied weighting adjustments to align the sample structure with national voter demographics, ensuring representativeness in critical variables such as region and age distribution .
+
+Budget allocation to support the core research objectives: respondent incentives and recruitment accounted for approximately half of the total budget, with the remainder distributed across data processing, modeling efforts, and operational costs including software and survey platform fees.
+
+
+**Budget Allocation**:
+
+-**Respondent Recruitment and Incentives**: $50,000
+
+-**Data Processing and Validation**: $15,000
+
+-**Survey Platform and Operational Costs**: $10,000
+
+-**Modeling and Data Analysis**: $20,000
+
+-**Contingency and Miscellaneous Expenses**: $5,000
+
+A link to the survey can be found at: https://forms.gle/SXX3jEZw7ivrC7Sg8
+
+
+\newpage
+
+# References

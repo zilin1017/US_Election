@@ -1,5 +1,5 @@
 #### Preamble ####
-# Purpose: Replicated graphs from... [...UPDATE THIS...]
+# Purpose: Replicated graphs from predictin of poll plot.
 # Author: Zilin Liu
 # Date: 21 October 2024
 # Contact: liuzilin.liu@mail.utoronto.ca

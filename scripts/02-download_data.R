@@ -1,6 +1,6 @@
 #### Preamble ####
 # Purpose: Downloads and saves the data from fivethirtyeight (https://projects.fivethirtyeight.com/polls/president-general/2024/national/)
-# Author: Irene Liu
+# Author: Zilin Liu
 # Date: 21 October 2024
 # Contact: liuzilin.liu@mail.utoronto.ca
 # License: MIT

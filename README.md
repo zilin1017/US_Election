@@ -1,8 +1,8 @@
-# Prediction and analysis of 2024 US presidential election
+# Prediction and analysis of 2024 U.S presidential election
 
 ## Overview
 
-This repo repo contains the project with prediction of the winner of 2024 American election, and establishes a logistic regression model to discuss the election probability of Donald Trump to be the next U.S president.
+This repo contains the project with prediction of the winner of 2024 American election, and establishes a logistic regression model to discuss the election probability of Donald Trump to be the next U.S president.
 
 ## File Structure
 

@@ -1,6 +1,6 @@
 #### Preamble ####
 # Purpose: Tests the structure and validity of the America 2024 presidential polls dataset
-# Author: Irene Liu
+# Author: Zilin Liu
 # Date: 21 October 2024
 # Contact: liuzilin.liu@mail.utoronto.ca
 # License: MIT

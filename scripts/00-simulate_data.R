@@ -1,7 +1,7 @@
 #### Preamble ####
 # Purpose: Simulates a dataset of Australian electoral divisions, including the 
   #state,pollster,support rate, political stage and other relevant data.
-# Author: Irene Liu
+# Author: Zilin Liu
 # Date: 21 October 2024
 # Contact: liuzilin.liu@mail.utoronto.ca
 # License: MIT

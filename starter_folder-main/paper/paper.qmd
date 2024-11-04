@@ -6,7 +6,7 @@ author:
 thanks: "Code and data are available at: [https://github.com/RohanAlexander/starter_folder](https://github.com/RohanAlexander/starter_folder)."
 date: today
 date-format: long
-abstract: "This paper uses the data of the 2024 American election to predict, and creates a logistics regression model to discuss the election probability of Kamala Harris. In this paper, four States are used as predictive variables to predict whether Harris is voted or not, and Michigan and Pennsylvania are more supportive of Harris as president."
+abstract: "This paper uses the data of the 2024 American election to make a prediction, and establishes a logistic regression model to discuss the election probability of Donald Trump. In this paper, states, sample size, start date and transparency are used as predictive variables to predict whether Donald Trump will be elected president in the future. This paper also expounds the advantages and limitations of statistical modeling in election data, and fills the gap of the influence of different characteristics on election voting."
 format: pdf
 toc: true
 number-sections: true

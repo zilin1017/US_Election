@@ -1,6 +1,6 @@
 #### Preamble ####
 # Purpose: Replicated graphs from... [...UPDATE THIS...]
-# Author: Irene Liu
+# Author: Zilin Liu
 # Date: 21 October 2024
 # Contact: liuzilin.liu@mail.utoronto.ca
 # License: MIT

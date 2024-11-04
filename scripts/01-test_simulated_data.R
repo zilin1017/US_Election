@@ -1,7 +1,7 @@
 #### Preamble ####
 # Purpose: Tests the structure and validity of the simulated 2024 American 
   #electoral divisions dataset.
-# Author: Irene Liu
+# Author: Zilin Liu
 # Date: 21 October 2024
 # Contact: liuzilin.liu@mail.utoronto.ca
 # License: MIT

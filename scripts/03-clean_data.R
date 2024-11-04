@@ -1,6 +1,6 @@
 #### Preamble ####
 # Purpose: Cleans the raw polling data for the 2024 US presidential election.
-# Author: Irene Liu
+# Author: Zilin Liu
 # Date: 21 October 2024
 # Contact: liuzilin.liu@mail.utoronto.ca
 # License: MIT
